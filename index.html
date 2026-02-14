@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaurab Khadka · 3D portfolio</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            color: white;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* main overlay card – split into photo area + info */
+        .profile-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 1000px;
+            z-index: 20;
+            background: rgba(10, 15, 25, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 48px;
+            padding: 2rem 2.5rem;
+            border: 1px solid rgba(255, 215, 150, 0.25);
+            box-shadow: 0 35px 75px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,180,100,0.2) inset;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 2.5rem;
+            animation: fadeUp 1s ease;
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translate(-50%, -30%); }
+            100% { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        /* PHOTO PLACEHOLDER - now set up for profile.jpg */
+        .photo-placeholder {
+            flex: 0 0 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px solid rgba(255, 200, 120, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s ease;
+            margin: 0 auto;
+            overflow: hidden;    /* ensures image stays within circle */
+            position: relative;
+        }
+
+        /* image styling – will show profile.jpg if it exists */
+        .photo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+        }
+
+        /* fallback icon & text – hidden when image loads (we'll handle with JS) */
+        .photo-placeholder i,
+        .photo-placeholder span {
+            z-index: 2;
+            transition: opacity 0.2s;
+        }
+
+        .photo-placeholder i {
+            font-size: 4rem;
+            color: rgba(255, 220, 150, 0.9);
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 6px black);
+        }
+
+        .photo-placeholder span {
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 14px;
+            border-radius: 40px;
+            border: 1px solid rgba(255,215,0,0.5);
+            font-weight: 300;
+        }
+
+        /* right side: text + social */
+        .info-section {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        h1 {
+            font-size: 3.8rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem;
+            line-height: 1.1;
+            background: linear-gradient(145deg, #fff8e7, #d9cbff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .subhead {
+            font-size: 1.3rem;
+            font-weight: 300;
+            color: #d9d0ff;
+            margin-bottom: 0.75rem;
+        }
+
+        .student-line {
+            display: inline-block;
+            background: rgba(45, 50, 80, 0.5);
+            padding: 0.5rem 1.8rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            border: 1px solid #b99eff;
+            margin: 1rem 0 1.8rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .student-line i {
+            color: #ffcd7e;
+            margin-right: 8px;
+        }
+
+        /* social links */
+        .social-links {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0 0.8rem;
+        }
+
+        .social-links a {
+            color: white;
+            background: rgba(25, 30, 45, 0.8);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: 0.2s ease;
+            border: 1px solid rgba(255,200,150,0.4);
+            backdrop-filter: blur(6px);
+            text-decoration: none;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        .social-links a:hover {
+            background: #1f2a3a;
+            border-color: #ffb96b;
+            color: #ffc491;
+            transform: translateY(-6px) scale(1.08);
+            box-shadow: 0 18px 25px rgba(0,0,0,0.6);
+        }
+
+        .meta {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.6;
+            display: flex;
+            gap: 24px;
+        }
+
+        /* portfolio button style */
+        .portfolio-btn {
+            margin: 1rem 0;
+        }
+        .portfolio-btn a {
+            display: inline-block;
+            background: rgba(255, 215, 150, 0.15);
+            border: 1px solid rgba(255, 200, 120, 0.7);
+            color: #ffdfaa;
+            padding: 0.6rem 2rem;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 400;
+            backdrop-filter: blur(5px);
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+        .portfolio-btn a:hover {
+            background: rgba(255, 200, 120, 0.3);
+            color: white;
+            border-color: #ffbc6e;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 1.2rem;
+            right: 2rem;
+            z-index: 25;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            color: #ccc;
+            background: rgba(0,0,0,0.2);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+        }
+
+        @media (max-width: 750px) {
+            .profile-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 2rem 1.5rem;
+                gap: 1.2rem;
+            }
+            .photo-placeholder {
+                flex: 0 0 150px;
+                width: 150px;
+                height: 150px;
+            }
+            h1 { font-size: 2.8rem; }
+            .social-links { justify-content: center; }
+            .footer { right: 1rem; bottom: 1rem; }
+        }
+    </style>
+    <!-- Google Font: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 3D canvas container -->
+    <div id="canvas-container"></div>
+
+    <!-- UI overlay card with photo placeholder and social links -->
+    <div class="profile-card">
+        <!-- left: photo placeholder – will display profile.jpg if exists -->
+        <div class="photo-placeholder" id="photoPlaceholder">
+            <!-- fallback icon & text (hidden when image loads) -->
+            <i class="fa-regular fa-user" id="fallbackIcon"></i>
+            <span id="fallbackText">photo</span>
+            <!-- the profile image will be inserted here via JavaScript -->
+        </div>
+        
+
+        <!-- right side content -->
+        <div class="info-section">
+            <h1>Gaurab Khadka</h1>
+            <div class="subhead"><strong>Crafting Digital Experiences with Code & Creativity</strong><br> <p>I'm a creative developer who transforms complex ideas into elegant digital 
+solutions. Passionate about crafting products that people love to use.</p></div>
+
+            <!-- simple student line -->
+            <div class="student-line">
+                <i class="fa-regular fa-star"></i> learning by building ·
+            </div>
+
+            <!-- social links (your actual profiles) -->
+            <div class="social-links">
+                <a href="https://github.com/gaurab-coder" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://x.com/Gaurab200" target="_blank" aria-label="X"><i class="fab fa-twitter"></i></a>
+                <a href="https://www.instagram.com/gaurab3915/" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.linkedin.com/in/gaurab-khadka-299096376/" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+
+            <!-- other portfolio button + always curious / footer moved inside -->
+            <div class="portfolio-btn">
+                <a href="https://www.gaurabkhadka82.com.np" target="_blank">View Other Portfolio</a>
+            </div>
+            <div class="meta">
+                <span><i class="fa-regular fa-compass"></i> always curious</span>
+                <!-- <span><i class="fa-regular fa-image"></i> ...</span> -->
+            </div>
+        </div>
+    </div>
+
+    <!-- All rights reserved footer (outside card) -->
+    <footer class="footer">
+        © All Rights Reserved 2026 · Gaurab Khadka
+    </footer>
+
+    <!-- Three.js import -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // --- profile image loader (runs before Three.js, but we keep everything else) ---
+        (function() {
+            const placeholder = document.getElementById('photoPlaceholder');
+            if (!placeholder) return;
+
+            // Create an img element to try loading profile.jpg
+            const img = new Image();
+            img.onload = function() {
+                // image exists: hide fallback icon & text, then append image
+                const icon = document.getElementById('fallbackIcon');
+                const text = document.getElementById('fallbackText');
+                if (icon) icon.style.opacity = '0';
+                if (text) text.style.opacity = '0';
+                // ensure they are hidden but keep layout (or we can remove, but opacity keeps space)
+                // actually we want them hidden and not clickable
+                if (icon) icon.style.display = 'none';
+                if (text) text.style.display = 'none';
+                
+                img.style.position = 'absolute';
+                img.style.top = '0';
+                img.style.left = '0';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '50%';
+                img.alt = 'profile';
+                placeholder.appendChild(img);
+            };
+            img.onerror = function() {
+                // image not found: fallback remains visible – do nothing
+                console.log("profile.jpg not found – showing icon fallback.");
+            };
+
+            img.src = 'profile.jpg';  // exactly as requested: profile.jpg in same folder
+        })();
+
+        // --- Three.js code (unchanged, your exact scene) ---
+        import * as THREE from 'three';
+        import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
+
+        // --- setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0e0e1a); // deep indigo
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(6, 2.5, 11);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = false; // keep clean
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- lighting: soft and warm ---
+        const ambient = new THREE.AmbientLight(0x40406b);
+        scene.add(ambient);
+
+        const light1 = new THREE.PointLight(0x88aaff, 1.0);
+        light1.position.set(4, 5, 6);
+        scene.add(light1);
+
+        const light2 = new THREE.PointLight(0xffaa88, 0.9);
+        light2.position.set(-5, 3, 5);
+        scene.add(light2);
+
+        const backLight = new THREE.PointLight(0x4466aa, 0.5);
+        backLight.position.set(0, 2, -8);
+        scene.add(backLight);
+
+        // --- SIMPLE & CLEAN 3D elements (no clutter, just aesthetic forms) ---
+
+        // 1. Central floating "core" (icosahedron) - subtle
+        const coreGeo = new THREE.IcosahedronGeometry(1.3, 1);
+        const coreMat = new THREE.MeshStandardMaterial({
+            color: 0xa88eff,
+            emissive: 0x221144,
+            roughness: 0.3,
+            metalness: 0.1,
+            wireframe: false,
+            transparent: true,
+            opacity: 0.7
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        core.position.set(0, 1.2, -0.5);
+        scene.add(core);
+
+        // 2. Thin wireframe sphere around it (very light)
+        const wireSphereGeo = new THREE.SphereGeometry(1.8, 24, 18);
+        const wireSphereMat = new THREE.MeshStandardMaterial({
+            color: 0xccbbff,
+            emissive: 0x111133,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const wireSphere = new THREE.Mesh(wireSphereGeo, wireSphereMat);
+        wireSphere.position.copy(core.position);
+        scene.add(wireSphere);
+
+        // 3. A few floating rings (minimal)
+        const ringGeo = new THREE.TorusGeometry(2.2, 0.05, 20, 100);
+        const ringMat = new THREE.MeshStandardMaterial({ color: 0xffccaa, emissive: 0x331d0d, transparent: true, opacity: 0.5 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.set(1.8, 1.5, 1.2);
+        ring.rotation.x = 0.8;
+        ring.rotation.y = 0.5;
+        scene.add(ring);
+
+        const ring2 = new THREE.Mesh(
+            new THREE.TorusGeometry(1.6, 0.06, 18, 90),
+            new THREE.MeshStandardMaterial({ color: 0xaaccff, emissive: 0x112244, wireframe: true, transparent: true, opacity: 0.4 })
+        );
+        ring2.position.set(-2.0, 1.0, 0.8);
+        ring2.rotation.z = 1.2;
+        ring2.rotation.x = 0.4;
+        scene.add(ring2);
+
+        // 4. Small floating particles (stars) - but not too many
+        const particleCount = 400;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            const r = 7 + Math.random() * 10;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            particlePositions[i*3] = Math.sin(phi) * Math.cos(theta) * r;
+            particlePositions[i*3+1] = Math.sin(phi) * Math.sin(theta) * r * 0.6;
+            particlePositions[i*3+2] = Math.cos(phi) * r;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0xb3b3ff, size: 0.1, transparent: true, blending: THREE.AdditiveBlending });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // 5. ground/ambient grid (very faint)
+        const gridHelper = new THREE.GridHelper(14, 14, 0x99aaff, 0x334466);
+        gridHelper.position.y = -1.5;
+        scene.add(gridHelper);
+
+        // --- controls: auto-rotate slow, no pan/zoom to keep it minimal ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.3;
+        controls.target.set(0, 0.8, 0);
+
+        // --- animation ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // gentle rotation of main shapes
+            core.rotation.x += 0.002;
+            core.rotation.y += 0.004;
+            wireSphere.rotation.x = core.rotation.x * 0.8;
+            wireSphere.rotation.y = core.rotation.y * 0.8;
+
+            ring.rotation.y += 0.005;
+            ring.rotation.x += 0.002;
+            ring2.rotation.z += 0.004;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
