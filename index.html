@@ -251,11 +251,16 @@
     <!-- UI overlay card with photo placeholder and social links -->
     <div class="profile-card">
         <!-- left: photo placeholder – will display profile.jpg if exists -->
+        <!--<div class="photo-placeholder" id="photoPlaceholder">-->
+            <!-- fallback icon & text (hidden when image loads) -->
+        <!--    <i class="fa-regular fa-user" id="fallbackIcon"></i>-->
+        <!--    <span id="fallbackText">photo</span>-->
+            <!-- the profile image will be inserted here via JavaScript -->
+        <!--</div>-->
         <div class="photo-placeholder">
     <img src="https://avatars.githubusercontent.com/u/201885846?v=4"
          alt="Gaurab Khadka">
 </div>
-        
 
         <!-- right side content -->
         <div class="info-section">
@@ -334,7 +339,6 @@ solutions. Passionate about crafting products that people love to use.</p></div>
                 // image not found: fallback remains visible – do nothing
                 console.log("profile.jpg not found – showing icon fallback.");
             };
-
             img.src = 'profile.jpg';  // exactly as requested: profile.jpg in same folder
         })();
 
